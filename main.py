@@ -74,16 +74,18 @@ and provide spoken guidance to the clinician.
 
 ## Your Behaviour
 
-- Speak naturally and supportively.  Give short, clear feedback after each observation.
-- Tell the user what you are detecting and what objects you see in the video.
-- Use **draw_box** to annotate important items you see (PPE, medications, hands, equipment).
+- You are a fully interactive, real-time conversational AI. Chat back when the clinician speaks to you. If they ask a question about medication, answer it immediately!
+- Speak naturally and supportively. You are a conversational AI proctor acting as an observer.
+- Actively describe the visual environment to the user. Tell them exactly what you see: items on the table, the clinician's current actions, and any changes in the scene.
+- Keep all of your answers brief and concise. Do NOT ramble, cap your responses to 1-2 sentences at a time.
+- Use **draw_box** to annotate important items you see (PPE, medications, hands, equipment, table elements).
 - Call **log_step** every time you confirm a protocol step has been completed.
 - Call **log_violation** IMMEDIATELY when you detect a safety issue:
     - Missing or improperly worn PPE (no mask, no gloves).
     - Medication handled without gloves.
     - Wrong technique or contamination risk.
     - Any other unsafe act.
-- When nothing noteworthy is happening, stay quiet -- do NOT narrate every frame.
+- Narrate actions as they happen so the clinician knows you are monitoring their workspace.
 - If the Roboflow detector reports objects (masks, gloves, vests, NO-Mask, NO-Safety Vest etc.),
   incorporate that information into your assessment and tell the user what you detect.
 """
@@ -225,6 +227,9 @@ async def create_agent(**kwargs) -> Agent:
 
 
 async def join_call(agent: Agent, call_type: str, call_id: str, **kwargs) -> None:
+    # Ensure the agent user exists in Stream's backend before creating the call
+    await agent.create_user()
+    
     call = await agent.create_call(call_type, call_id)
     print(f"Connecting to call: {call_id}")
 
@@ -240,35 +245,34 @@ async def join_call(agent: Agent, call_type: str, call_id: str, **kwargs) -> Non
 
                 async def evaluate_video_loop():
                     try:
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(10)
                         for _ in range(60):
                             detections = roboflow_proc.latest_detections
                             summary = detections.get("summary", "") if detections else ""
 
                             if summary and summary != "nothing detected":
-                                # Check if this detection summary has been reported recently
                                 if not is_recent_report(summary, session_state):
                                     prompt = (
                                         f"Roboflow detections: {summary}. "
-                                        "Assess compliance with the current protocol step. "
-                                        "Log steps or violations as appropriate and give brief spoken feedback. "
-                                        "Tell the user what you are detecting and make it clear."
+                                        "Give a BRIEF spontaneous observation of what you see. "
+                                        "If the user is speaking to you or asking a question, ALWAYS prioritize answering them first. "
+                                        "Keep your responses concise (1-2 sentences max) so you don't talk over the user or yourself."
                                     )
                                     add_report(summary, session_state)
                                 else:
                                     prompt = (
-                                        "Observe the current video frame. "
-                                        "Only report significant changes or new detections. "
-                                        "Focus on protocol steps or violations if present."
+                                        "Briefly note any new actions the clinician is taking. "
+                                        "If the user is trying to talk to you, prioritize answering them immediately! "
+                                        "Keep it under 2 sentences."
                                     )
                             else:
                                 prompt = (
-                                    "Observe the current video frame. "
-                                    "Report any protocol steps completed or violations you see."
+                                    "Provide a very short 1-sentence description of the workspace layout or the clinician's actions. "
+                                    "If the user asks you a question or talks to you, STOP describing and chat with them naturally."
                                 )
 
                             await agent.simple_response(prompt)
-                            await asyncio.sleep(5)
+                            await asyncio.sleep(15) # Wait 15 seconds so it has time to finish talking!
                     except asyncio.CancelledError:
                         pass
 
