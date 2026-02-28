@@ -1,0 +1,11 @@
+[project]
+name = "medication-proctor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "imageio-ffmpeg>=0.6.0",
+    "inference-sdk>=0.9.0",
+    "vision-agents[gemini,getstream,openai,ultralytics]>=0.3.8",
+]
