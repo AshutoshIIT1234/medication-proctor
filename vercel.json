@@ -1,6 +1,1 @@
-﻿{
-  "version": 2,
-  "builds": [
-    { "src": "frontend/next.config.ts", "use": "@vercel/next" }
-  ]
-}
+{"version":2,"builds":[{"src":"frontend/package.json","use":"@vercel/next"}]}
