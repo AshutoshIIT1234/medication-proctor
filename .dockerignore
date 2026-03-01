@@ -12,6 +12,7 @@ build/
 .venv/
 .git/
 .gitignore
+frontend/
 *.md
 !README.md
 sig.txt

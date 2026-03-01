@@ -17,8 +17,8 @@ FROM python:3.13-slim
 
 # System dependency for OpenCV / image libs used by ultralytics/roboflow
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgl1 \
-        libglib2.0-0 \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -37,7 +37,7 @@ EXPOSE 8080
 
 # Health check (Vision Agents exposes /health)
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"
+    CMD python -c "import os, urllib.request; port = os.environ.get('PORT', '8080'); urllib.request.urlopen(f'http://localhost:{port}/health')"
 
 # Run in server mode so the container can handle multiple concurrent sessions
-CMD ["python", "main.py", "serve", "--host", "0.0.0.0", "--port", "8080"]
+CMD sh -c "python main.py serve --host 0.0.0.0 --port ${PORT:-8080}"
