@@ -1,0 +1,19 @@
+﻿services:
+  - type: web
+    name: medication-proctor-backend
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: STREAM_API_KEY
+        sync: false
+      - key: STREAM_API_SECRET
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: ROBOFLOW_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
